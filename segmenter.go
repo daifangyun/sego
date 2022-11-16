@@ -140,10 +140,6 @@ func (seg *Segmenter) InternalSegment(bytes []byte, searchMode bool) []Segment {
 	return seg.internalSegment(bytes, searchMode)
 }
 
-func (seg *Segmenter) PrefixPredict(key []byte, num int) (ids []int) {
-	return seg.dict.trie.PrefixPredict(key, num)
-}
-
 // Close 释放资源
 func (seg *Segmenter) Close() {
 	if seg.dict != nil {

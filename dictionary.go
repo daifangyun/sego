@@ -71,3 +71,7 @@ func (dict *Dictionary) lookupTokens(words []Text, tokens []*Token) (numOfTokens
 	}
 	return
 }
+
+func (dict *Dictionary) Trie() *cedar.Cedar {
+	return dict.trie
+}
