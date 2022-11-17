@@ -125,6 +125,66 @@ func (seg *Segmenter) LoadDictionary(files string) {
 	log.Println("sego词典载入完毕")
 }
 
+// Dic 词典结构
+type Dic struct {
+	Word      string // 分词文本
+	Frequency int    // 频率
+	Classify  string // 词性
+}
+
+// LoadDictionaryByDic 从参数载入词典
+func (seg *Segmenter) LoadDictionaryByDic(dic []*Dic) {
+	seg.dict = NewDictionary()
+	for _, d := range dic {
+		text := d.Word
+		frequency := d.Frequency
+		pos := d.Classify
+
+		// 过滤频率太小的词
+		if frequency < minTokenFrequency {
+			continue
+		}
+
+		// 将分词添加到字典中
+		words := splitTextToWords([]byte(text))
+		token := Token{text: words, frequency: frequency, pos: pos}
+		seg.dict.addToken(token)
+	}
+
+	// 计算每个分词的路径值，路径值含义见Token结构体的注释
+	logTotalFrequency := float32(math.Log2(float64(seg.dict.totalFrequency)))
+	for i := range seg.dict.tokens {
+		token := &seg.dict.tokens[i]
+		token.distance = logTotalFrequency - float32(math.Log2(float64(token.frequency)))
+	}
+
+	// 对每个分词进行细致划分，用于搜索引擎模式，该模式用法见Token结构体的注释。
+	for i := range seg.dict.tokens {
+		token := &seg.dict.tokens[i]
+		segments := seg.segmentWords(token.text, true)
+
+		// 计算需要添加的子分词数目
+		numTokensToAdd := 0
+		for iToken := 0; iToken < len(segments); iToken++ {
+			if len(segments[iToken].token.text) > 0 {
+				numTokensToAdd++
+			}
+		}
+		token.segments = make([]*Segment, numTokensToAdd)
+
+		// 添加子分词
+		iSegmentsToAdd := 0
+		for iToken := 0; iToken < len(segments); iToken++ {
+			if len(segments[iToken].token.text) > 0 {
+				token.segments[iSegmentsToAdd] = &segments[iToken]
+				iSegmentsToAdd++
+			}
+		}
+	}
+
+	log.Println("sego词典载入完毕")
+}
+
 // Segment 对文本分词
 //
 // 输入参数：
